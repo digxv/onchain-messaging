@@ -10,34 +10,88 @@ contract Messaging {
         uint256 msg_id;
         address sender;
         address receiver;
-        string uri;
+        ThreadElem[] thread;
         uint256 timestamp;
+    }
+
+    struct ThreadElem {
+        string receiver_key;
+        string receiver_uri;
+        string sender_key;
+        string sender_uri;
     }
 
     event MessageSent(
         uint256 msg_id,
         address receiver,
         string uri,
+        string encrypted_key,
+        uint256 timestamp
+    );
+
+    event Replied(
+        uint256 msg_id,
+        address receiver,
+        string uri,
+        string encrypted_key,
         uint256 timestamp
     );
 
     function sendMessage(
         string memory _uri,
+        string memory receiver_key,
+        string memory receiver_uri,
+        string memory sender_key,
+        string memory sender_uri,
         address _receiver
     ) public {
         messageCount++;
+
+        ThreadElem memory _threadElem = ThreadElem(
+            receiver_key,
+            receiver_uri,
+            sender_key,
+            sender_uri
+        );
+
+        ThreadElem[] memory thread;
+
+        thread[0] = _threadElem;
 
         messages[messageCount] = Message(
             messageCount,
             msg.sender,
             _receiver,
-            _uri,
+            thread,
             block.timestamp
         );
 
         receiverToMessages[_receiver].push(messageCount);
 
-        emit MessageSent(messageCount, _receiver, _uri, block.timestamp);
+        emit MessageSent(messageCount, _receiver, _uri, receiver_key, block.timestamp);
+    }
+
+    function reply(
+        uint256 _msg_id,
+        string memory _receiver_uri,
+        string memory _receiver_key,
+        string memory _sender_uri,
+        string memory _sender_key
+    ) public {
+        Message memory message = messages[_msg_id];
+
+        require(msg.sender == message.receiver || msg.sender == message.sender, "Only the receiver & sender can reply to the messages.");
+
+        ThreadElem memory _threadElem = ThreadElem(
+            _receiver_key,
+            _receiver_uri,
+            _sender_key,
+            _sender_uri
+        );
+
+        message.thread[message.thread.length + 1] = _threadElem;
+
+        emit Replied(_msg_id, message.sender, _receiver_uri, _receiver_key, block.timestamp);
     }
 
     function allMessages(address _receiver) external view returns (Message[] memory) {
@@ -48,11 +102,5 @@ contract Messaging {
         }
 
         return list;
-    }
-
-    function messageURI(
-        uint256 _msg_id
-    ) external view returns (string memory uri) {
-        return messages[_msg_id].uri;
     }
 }
