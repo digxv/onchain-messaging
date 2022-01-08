@@ -2,105 +2,83 @@ pragma solidity ^0.8.0;
 
 contract Messaging {
 
-    uint256 public messageCount = 0;
-    mapping(uint256 => Message) public messages;
-    mapping(address => uint256[]) public receiverToMessages;
+    uint256 public threadCount = 1;
+    mapping(uint256 => Thread) public threads;
+
+    struct Thread {
+        uint256 thread_id;
+        address receiver;
+        string receiver_key;
+        address sender;
+        string sender_key;
+        Message[] messages;
+    }
 
     struct Message {
-        uint256 msg_id;
-        address sender;
         address receiver;
-        ThreadElem[] thread;
+        string uri;
         uint256 timestamp;
     }
 
-    struct ThreadElem {
-        string receiver_key;
-        string receiver_uri;
-        string sender_key;
-        string sender_uri;
+    function newThread(
+        address _receiver,
+        string memory _sender_key,
+        string memory _receiver_key
+    ) public returns (uint256) {
+        threadCount++;
+
+        Message[] memory messages;
+
+        threads[threadCount] = Thread(
+            threadCount,
+            _receiver,
+            _receiver_key,
+            msg.sender,
+            _sender_key,
+            messages
+        );
+
+        return threadCount;
     }
-
-    event MessageSent(
-        uint256 msg_id,
-        address receiver,
-        string uri,
-        string encrypted_key,
-        uint256 timestamp
-    );
-
-    event Replied(
-        uint256 msg_id,
-        address receiver,
-        string uri,
-        string encrypted_key,
-        uint256 timestamp
-    );
 
     function sendMessage(
+        uint256 _thread_id,
         string memory _uri,
-        string memory receiver_key,
-        string memory receiver_uri,
-        string memory sender_key,
-        string memory sender_uri,
-        address _receiver
+        address _receiver,
+        string memory _sender_key,
+        string memory _receiver_key
     ) public {
-        messageCount++;
+        if (_thread_id == 0) {
+            uint256 new_thread_id = newThread(
+                _receiver,
+                _sender_key,
+                _receiver_key
+            );
 
-        ThreadElem memory _threadElem = ThreadElem(
-            receiver_key,
-            receiver_uri,
-            sender_key,
-            sender_uri
-        );
+            Thread memory thread = threads[new_thread_id];
 
-        ThreadElem[] memory thread;
+            Message[] memory messages;
 
-        thread[0] = _threadElem;
+            messages[messages.length] = Message(
+                _receiver,
+                _uri,
+                block.timestamp
+            );
 
-        messages[messageCount] = Message(
-            messageCount,
-            msg.sender,
-            _receiver,
-            thread,
-            block.timestamp
-        );
+            thread.messages = messages;
+        } else {
+            Thread memory thread = threads[_thread_id];
 
-        receiverToMessages[_receiver].push(messageCount);
+            require(msg.sender == thread.receiver || msg.sender == thread.sender, "Only the receiver & sender can reply to the messages.");
 
-        emit MessageSent(messageCount, _receiver, _uri, receiver_key, block.timestamp);
-    }
+            Message memory message = Message(
+                _receiver,
+                _uri,
+                block.timestamp
+            );
 
-    function reply(
-        uint256 _msg_id,
-        string memory _receiver_uri,
-        string memory _receiver_key,
-        string memory _sender_uri,
-        string memory _sender_key
-    ) public {
-        Message memory message = messages[_msg_id];
-
-        require(msg.sender == message.receiver || msg.sender == message.sender, "Only the receiver & sender can reply to the messages.");
-
-        ThreadElem memory _threadElem = ThreadElem(
-            _receiver_key,
-            _receiver_uri,
-            _sender_key,
-            _sender_uri
-        );
-
-        message.thread[message.thread.length + 1] = _threadElem;
-
-        emit Replied(_msg_id, message.sender, _receiver_uri, _receiver_key, block.timestamp);
-    }
-
-    function allMessages(address _receiver) external view returns (Message[] memory) {
-        Message[] memory list = new Message[](receiverToMessages[_receiver].length);
-
-        for(uint256 i = 0; i < receiverToMessages[_receiver].length; i++) {
-            list[i] = messages[receiverToMessages[_receiver][i]];
+            // ERROR HERE PLS
+            thread.messages.push(message);
         }
-
-        return list;
     }
 }
