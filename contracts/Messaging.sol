@@ -12,7 +12,6 @@ contract Messaging {
         string receiver_key;
         address sender;
         string sender_key;
-        uint256 messagesIndex;
     }
 
     struct Message {
@@ -33,8 +32,7 @@ contract Messaging {
             _receiver,
             _receiver_key,
             msg.sender,
-            _sender_key,
-            messagesIndex++
+            _sender_key
         );
 
         return threadCount;
@@ -54,9 +52,7 @@ contract Messaging {
                 _receiver_key
             );
 
-            Thread memory thread = threads[new_thread_id];
-
-            messages[thread.messagesIndex].push(
+            messages[new_thread_id].push(
                 Message(_receiver, _uri, block.timestamp)
             );
         } else {
@@ -67,7 +63,7 @@ contract Messaging {
                 "Only the receiver & sender can reply to the messages."
             );
 
-            messages[thread.messagesIndex].push(
+            messages[thread.thread_id].push(
                 Message(_receiver, _uri, block.timestamp)
             );
         }
