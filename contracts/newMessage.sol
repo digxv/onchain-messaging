@@ -3,7 +3,13 @@ pragma solidity ^0.8.0;
 contract Messaging {
     uint256 public threadCount = 1;
 
-    mapping(uint256 => Thread) public threads;
+    // TODO - Usage Global metrics to get total number of messages,threads stored
+    // uint256 public messagesCount;
+    
+
+    mapping(address => uint256[]) private threadIds;
+    mapping(uint256 => Thread) private threads;
+
     mapping(uint256 => Message[]) public messages;
     uint256 public messagesIndex = 0;
 
@@ -13,6 +19,7 @@ contract Messaging {
         string receiver_key;
         address sender;
         string sender_key;
+       
     }
 
     struct Message {
@@ -32,7 +39,7 @@ contract Messaging {
         string memory _sender_key,
         string memory _receiver_key
     ) internal returns (uint256) {
-        threadCount++;
+       
 
         threads[threadCount] = Thread(
             threadCount,
@@ -40,10 +47,41 @@ contract Messaging {
             _receiver_key,
             msg.sender,
             _sender_key
-        );
+            );
 
-        return threadCount;
+        threadIds[msg.sender].push(threadCount);
+        threadIds[_receiver].push(threadCount);
+
+         threadCount++;
+
+        return threadCount-1;
     }
+
+function getAllThreads() public view returns(uint256[] memory) {
+ if(threadIds[msg.sender].length != 0 ) {
+ require(threads[threadIds[msg.sender][0]].sender == msg.sender || threads[threadIds[msg.sender][0]].receiver == msg.sender );
+
+ return threadIds[msg.sender];
+ }
+}
+function getThread(uint thread_id) public view returns(Thread memory) {
+ if(threadIds[msg.sender].length != 0 ) {
+ require(threads[thread_id].sender == msg.sender || threads[thread_id].receiver == msg.sender );
+
+ return threads[thread_id];
+ }
+}
+
+function getMessages(uint thread_id) public view returns(Message[] memory) {
+ if(threadIds[msg.sender].length != 0 ) {
+ require(threads[thread_id].sender == msg.sender || threads[thread_id].receiver == msg.sender );
+
+ return messages[thread_id];
+ }
+}
+
+
+
 
     function sendMessage(
         uint256 _thread_id,
@@ -72,7 +110,7 @@ contract Messaging {
                 "Only the receiver & sender can reply to the messages."
             );
 
-            messages[thread.thread_id].push(
+            messages[_thread_id].push(
                 Message(_receiver, _uri, block.timestamp)
             );
 
