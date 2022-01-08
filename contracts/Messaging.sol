@@ -1,9 +1,10 @@
 pragma solidity ^0.8.0;
 
 contract Messaging {
-
     uint256 public threadCount = 1;
     mapping(uint256 => Thread) public threads;
+    mapping(uint256 => Message[]) public messages;
+    uint256 public messagesIndex = 0;
 
     struct Thread {
         uint256 thread_id;
@@ -11,7 +12,6 @@ contract Messaging {
         string receiver_key;
         address sender;
         string sender_key;
-        Message[] messages;
     }
 
     struct Message {
@@ -24,18 +24,15 @@ contract Messaging {
         address _receiver,
         string memory _sender_key,
         string memory _receiver_key
-    ) public returns (uint256) {
+    ) internal returns (uint256) {
         threadCount++;
-
-        Message[] memory messages;
 
         threads[threadCount] = Thread(
             threadCount,
             _receiver,
             _receiver_key,
             msg.sender,
-            _sender_key,
-            messages
+            _sender_key
         );
 
         return threadCount;
@@ -55,30 +52,20 @@ contract Messaging {
                 _receiver_key
             );
 
-            Thread memory thread = threads[new_thread_id];
-
-            Message[] memory messages;
-
-            messages[messages.length] = Message(
-                _receiver,
-                _uri,
-                block.timestamp
+            messages[new_thread_id].push(
+                Message(_receiver, _uri, block.timestamp)
             );
-
-            thread.messages = messages;
         } else {
-            Thread memory thread = threads[_thread_id];
+            Thread storage thread = threads[_thread_id];
 
-            require(msg.sender == thread.receiver || msg.sender == thread.sender, "Only the receiver & sender can reply to the messages.");
-
-            Message memory message = Message(
-                _receiver,
-                _uri,
-                block.timestamp
+            require(
+                msg.sender == thread.receiver || msg.sender == thread.sender,
+                "Only the receiver & sender can reply to the messages."
             );
 
-            // ERROR HERE PLS
-            thread.messages.push(message);
+            messages[thread.thread_id].push(
+                Message(_receiver, _uri, block.timestamp)
+            );
         }
     }
 }

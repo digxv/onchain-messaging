@@ -10,10 +10,10 @@ module.exports = {
   networks: {
     ropsten: {
       url: process.env.INFURA_URL,
-      accounts: [`0x${process.env.PRIVATE_KEY}`]
-    }
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+    },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
-  }
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
 };
