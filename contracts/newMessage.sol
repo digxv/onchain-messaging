@@ -57,26 +57,34 @@ contract Messaging {
         return threadCount-1;
     }
 
-function getAllThreads() public view returns(uint256[] memory) {
+function getAllThreadIds() public view returns(uint256[] memory) {
  if(threadIds[msg.sender].length != 0 ) {
  require(threads[threadIds[msg.sender][0]].sender == msg.sender || threads[threadIds[msg.sender][0]].receiver == msg.sender );
 
  return threadIds[msg.sender];
  }
 }
-function getThread(uint thread_id) public view returns(Thread memory) {
- if(threadIds[msg.sender].length != 0 ) {
+// function getThread(uint thread_id) public view returns(Thread memory) {
+//  if(threadIds[msg.sender].length != 0 ) {
+//  require(threads[thread_id].sender == msg.sender || threads[thread_id].receiver == msg.sender );
+
+//  return threads[thread_id];
+//  }
+// }
+
+// function getMessages(uint thread_id) public view returns(Message[] memory) {
+//  if(threadIds[msg.sender].length != 0 ) {
+//  require(threads[thread_id].sender == msg.sender || threads[thread_id].receiver == msg.sender );
+
+//  return messages[thread_id];
+//  }
+// }
+
+function getThreadAndMessages(uint thread_id) public view returns(Thread memory, Message[] memory) {
+    if(threadIds[msg.sender].length != 0 ) {
  require(threads[thread_id].sender == msg.sender || threads[thread_id].receiver == msg.sender );
 
- return threads[thread_id];
- }
-}
-
-function getMessages(uint thread_id) public view returns(Message[] memory) {
- if(threadIds[msg.sender].length != 0 ) {
- require(threads[thread_id].sender == msg.sender || threads[thread_id].receiver == msg.sender );
-
- return messages[thread_id];
+ return (threads[thread_id],messages[thread_id]);
  }
 }
 
