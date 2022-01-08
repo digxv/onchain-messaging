@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 contract Messaging {
     uint256 public threadCount = 1;
 
+    // TODO - Usage Global metrics to get total number of messages,threads stored
+    // uint256 public messagesCount;
     
 
     mapping(address => uint256[]) private threadIds;
@@ -77,6 +79,7 @@ function getMessages(uint thread_id) public view returns(Message[] memory) {
  return messages[thread_id];
  }
 }
+
 
 
 
