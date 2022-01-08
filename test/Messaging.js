@@ -1,3 +1,4 @@
+// NOT UPDATED
 const { expect } = require("chai");
 
 describe("Messaging contract", () => {
