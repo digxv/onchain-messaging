@@ -20,6 +20,12 @@ contract Messaging {
         uint256 timestamp;
     }
 
+    event MessageSent (
+        address receiver,
+        string uri,
+        uint256 timestamp
+    );
+
     function newThread(
         address _receiver,
         string memory _sender_key,
@@ -55,6 +61,8 @@ contract Messaging {
             messages[new_thread_id].push(
                 Message(_receiver, _uri, block.timestamp)
             );
+
+            emit MessageSent(_receiver, _uri, block.timestamp);
         } else {
             Thread storage thread = threads[_thread_id];
 
@@ -66,6 +74,8 @@ contract Messaging {
             messages[thread.thread_id].push(
                 Message(_receiver, _uri, block.timestamp)
             );
+
+            emit MessageSent(_receiver, _uri, block.timestamp);
         }
     }
 }
